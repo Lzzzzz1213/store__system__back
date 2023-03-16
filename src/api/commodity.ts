@@ -47,3 +47,9 @@ export function deleteCommodityApi(id: number) {
     method: "delete"
   })
 }
+export function editCommoditDetailApi(id: number) {
+  return request({
+    url: `/commodity/editdetail/?method=created&id=${id}`,
+    method: "get"
+  })
+}

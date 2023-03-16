@@ -1,11 +1,12 @@
 import { request } from "@/utils/service"
 
-interface FormRuleCommodityImgProps {
-  imgText?: string
-  disabledType?: boolean
-}
+// interface FormRuleCommodityImgProps {
+//   imgText?: string
+//   disabledType?: boolean
+// }
 
 export function uploadCommodityImgApi(id: number, data: any) {
+  console.log("id", id)
   return request({
     url: `/img/commodityimgupload/${id}/`,
     method: "put",

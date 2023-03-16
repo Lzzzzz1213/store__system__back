@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { getCommodityListApi, addCommodityApi, updataCommodityApi, deleteCommodityApi } from "@/api/commodity"
+import {
+  getCommodityListApi,
+  addCommodityApi,
+  updataCommodityApi,
+  deleteCommodityApi,
+  editCommoditDetailApi
+} from "@/api/commodity"
 import { getCategoryListApi } from "@/api/category"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight, UploadFilled } from "@element-plus/icons-vue"
@@ -19,7 +25,12 @@ const formData = reactive({
   introduction: "",
   category_id: undefined
 })
-
+const formDetail = reactive({
+  store: undefined
+})
+const formDeatilRules: FormRules = reactive({
+  store: [{ required: true, trigger: "blur", message: "请输入商品库存" }]
+})
 const formRules: FormRules = reactive({
   name: [{ required: true, trigger: "blur", message: "请输入商品名" }],
   category_id: [{ required: true, trigger: "blur", message: "请选择商品种类" }],
@@ -81,7 +92,32 @@ const handleDelete = (row: any) => {
   })
 }
 //#endregion
-
+//#region 编辑信息
+const currentDetailId = ref<undefined | number>(undefined)
+const editDetailImg = ref(false)
+const editDetail = (row: any) => {
+  currentDetailId.value = row.id
+  editCommoditDetailApi(currentDetailId.value as number)
+    .then((res) => {
+      if (res.msg != null) {
+        editDetailImg.value = true
+        currentConmmodityImgId.value = res.data.img
+        formDetail.store = res.data.store
+      } else {
+        editDetailImg.value = true
+        currentConmmodityImgId.value = res.data[0].img
+        formDetail.store = res.data[0].store
+      }
+    })
+    .catch((error) => {
+      ElMessage.error("打开商品库存编辑页面失败!")
+      console.log(error)
+    })
+    .finally(() => {
+      currentDetailId.value = undefined
+    })
+}
+//#endregion
 //#region 改
 const currentUpdateId = ref<undefined | number>(undefined)
 const handleUpdate = (row: any) => {
@@ -137,6 +173,9 @@ const beforeUpload = (file: any) => {
     })
     .catch(() => {
       ElMessage.error("上传失败")
+    })
+    .finally(() => {
+      currentConmmodityImgId.value = undefined
     })
 }
 
@@ -273,6 +312,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改商品</el-button>
               <el-button type="primary" text bg size="small" @click="upload(scope.row)">上传图片</el-button>
+              <el-button type="primary" text bg size="small" @click="editDetail(scope.row)">编辑商品详细信息</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除商品</el-button>
             </template>
           </el-table-column>
@@ -322,6 +362,36 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog title="编辑商品详细信息图录" :close-on-click-modal="false" v-model="editDetailImg" width="500px">
+      <el-form ref="formRef" :model="formDetail" :rules="formDeatilRules" label-width="50px" label-position="left">
+        <el-form-item prop="store" label="库存">
+          <el-input v-model="formDetail.store" placeholder="请输入商品库存" />
+        </el-form-item>
+      </el-form>
+      <el-upload
+        class="upload-demo"
+        drag
+        accept=".jpeg,.png,.jpg"
+        :before-upload="beforeUpload"
+        :file-list="fileList"
+        :on-remove="handleRemove"
+        :limit="1"
+      >
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">将文件拖到此处，<em>或点击上传</em></div>
+        <template #tip>
+          <div class="el-upload__tip">只支持jpg, jpeg, png格式的图片文件</div>
+        </template>
+      </el-upload>
+
+      <template #footer>
+        <div style="text-align: center; width: 100%">
+          <el-button type="primary" style="width: 200px" @click="clickSave()">提交</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <el-dialog title="上传文件" :close-on-click-modal="false" v-model="uploadFile" width="500px">
       <el-upload
         class="upload-demo"
