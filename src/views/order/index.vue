@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { getDepartmentListApi } from "@/api/department"
+import { getOrderListApi } from "@/api/order"
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+import { status } from "nprogress"
 
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -13,10 +15,10 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  name: ""
+  status: ""
 })
 const formRules: FormRules = reactive({
-  name: [{ required: true, trigger: "blur", message: "请输入种类名" }]
+  name: [{ required: true, trigger: "blur", message: "请输入订单编号" }]
 })
 // const handleCreate = () => {
 //   formRef.value?.validate((valid: boolean) => {
@@ -43,7 +45,7 @@ const formRules: FormRules = reactive({
 // }
 const resetForm = () => {
   currentUpdateId.value = undefined
-  formData.name = ""
+  formData.status = ""
 }
 //#endregion
 
@@ -66,7 +68,7 @@ const resetForm = () => {
 const currentUpdateId = ref<undefined | number>(undefined)
 const handleUpdate = (row: any) => {
   currentUpdateId.value = row.id
-  formData.name = row.name
+  formData.status = row.status
   dialogVisible.value = true
 }
 //#endregion
@@ -75,17 +77,16 @@ const handleUpdate = (row: any) => {
 const tableData = ref<any[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  name: ""
+  order_no: ""
 })
 const getTableData = () => {
   loading.value = true
-  getDepartmentListApi({
+  getOrderListApi({
     currentPage: paginationData.currentPage,
-    size: paginationData.pageSize
-    // name: searchData.name || undefined
+    size: paginationData.pageSize,
+    order_no: searchData.order_no
   })
     .then((res: any) => {
-      console.log(res)
       paginationData.total = res.total
       tableData.value = res.data
     })
@@ -122,7 +123,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="name" label="种类名称">
+        <el-form-item prop="name" label="订单编号">
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
@@ -134,7 +135,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增种类</el-button>
+          <!--          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增种类</el-button>-->
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -149,15 +150,27 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
-          {{ tableData }}
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="编号" align="center" />
-          <el-table-column prop="departname" label="部门名称" align="center" />
-          <el-table-column prop="departnumber" label="部门编号" align="center" />
-          <!--          <el-table-column prop="updated_time" label="修改时间" align="center" />-->
+          <el-table-column prop="order_no" label="订单编号" align="center" />
+          <el-table-column prop="order_amount" label="订单金额" align="center" />
+          <el-table-column prop="payment_amount" label="实付金额" align="center" />
+          <el-table-column prop="status" label="订单状态" align="center" />
+          <el-table-column prop="customer" label="客户id" align="center" />
+          <el-table-column prop="remark" label="备注" align="center" />
+          <el-table-column prop="created_time" label="添加时间" align="center" />
+          <el-table-column prop="updated_time" label="修改时间" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button
+                type="primary"
+                v-if="scope.row.status === '1'"
+                text
+                bg
+                size="small"
+                @click="handleUpdate(scope.row)"
+                >发货
+              </el-button>
               <!--              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>-->
             </template>
           </el-table-column>
@@ -184,13 +197,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="name" label="种类名称">
+        <el-form-item prop="name" label="物流编号">
           <el-input v-model="formData.name" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确认</el-button>
+        <el-button type="primary">确认</el-button>
       </template>
     </el-dialog>
   </div>

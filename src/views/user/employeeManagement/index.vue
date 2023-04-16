@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi } from "@/api/table"
+import { deleteTableDataApi, updateTableDataApi } from "@/api/table"
+import { createUserDataApi, getUserDataApi } from "@/api/user"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -14,19 +15,32 @@ const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
   username: "",
-  password: ""
+  password: "",
+  email: "",
+  id_card: "",
+  phone: "",
+  head_portrait_url: "https://img2.woyaogexing.com/2023/01/17/d2ca4e40164bd990d83e51d066b8053e.jpg",
+  type: "user"
 })
 const formRules: FormRules = reactive({
   username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+  password: [{ required: true, trigger: "blur", message: "请输入密码" }],
+  email: [{ required: true, trigger: "blur", message: "请输入邮箱" }],
+  id_card: [{ required: true, trigger: "blur", message: "请输入身份证" }],
+  phone: [{ required: true, trigger: "blur", message: "请输入手机号" }]
 })
 const handleCreate = () => {
   formRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
-        createTableDataApi({
+        createUserDataApi({
           username: formData.username,
-          password: formData.password
+          password: formData.password,
+          email: formData.email,
+          head_portrait_url: formData.head_portrait_url,
+          id_card: formData.id_card,
+          phone: formData.phone,
+          type: formData.type
         }).then(() => {
           ElMessage.success("新增成功")
           dialogVisible.value = false
@@ -51,6 +65,9 @@ const resetForm = () => {
   currentUpdateId.value = undefined
   formData.username = ""
   formData.password = ""
+  formData.email = ""
+  formData.id_card = ""
+  formData.phone = ""
 }
 //#endregion
 
@@ -138,7 +155,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-input v-model="searchData.username" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="phone" label="手机号">
-          <el-input v-model="searchData.phone" placeholder="请输入" />
+          <!--          <el-input v-model="searchData.phone" placeholder="请输入" />-->
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -177,8 +194,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="email" label="邮箱" align="center" />
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.status" type="success" effect="plain">启用</el-tag>
-              <el-tag v-else type="danger" effect="plain">禁用</el-tag>
+              <el-tag type="success" effect="plain">启用</el-tag>
+              <!--              <el-tag v-if="scope.row.status" type="success" effect="plain">启用</el-tag>-->
+              <!--              <el-tag v-else type="danger" effect="plain">禁用</el-tag>-->
             </template>
           </el-table-column>
           <el-table-column prop="last_login" label="上一次登陆" align="center" />
@@ -211,14 +229,20 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       width="30%"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="username" label="手机号">
+        <el-form-item prop="username" label="用户名">
           <el-input v-model="formData.username" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="password" label="邮箱">
+        <el-form-item prop="password" label="密码">
           <el-input v-model="formData.password" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="password" label="身份证">
-          <el-input v-model="formData.password" placeholder="请输入" />
+        <el-form-item prop="email" label="邮箱">
+          <el-input v-model="formData.email" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="email" label="身份证">
+          <el-input v-model="formData.id_card" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="email" label="手机号">
+          <el-input v-model="formData.phone" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>

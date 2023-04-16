@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 import { useAppStore } from "@/store/modules/app"
 import { useSettingsStore } from "@/store/modules/settings"
@@ -52,15 +52,15 @@ const logout = () => {
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <a target="_blank" href="https://juejin.cn/post/7089377403717287972">
-              <el-dropdown-item>中文文档</el-dropdown-item>
-            </a>
-            <a target="_blank" href="https://github.com/un-pany/v3-admin-vite">
-              <el-dropdown-item>GitHub</el-dropdown-item>
-            </a>
-            <a target="_blank" href="https://gitee.com/un-pany/v3-admin-vite">
-              <el-dropdown-item>Gitee</el-dropdown-item>
-            </a>
+            <!--            <a target="_blank" href="https://juejin.cn/post/7089377403717287972">-->
+            <!--              <el-dropdown-item>中文文档</el-dropdown-item>-->
+            <!--            </a>-->
+            <!--            <a target="_blank" href="https://github.com/un-pany/v3-admin-vite">-->
+            <!--              <el-dropdown-item>GitHub</el-dropdown-item>-->
+            <!--            </a>-->
+            <!--            <a target="_blank" href="https://gitee.com/un-pany/v3-admin-vite">-->
+            <!--              <el-dropdown-item>Gitee</el-dropdown-item>-->
+            <!--            </a>-->
             <el-dropdown-item divided @click="logout">
               <span style="display: block">退出登录</span>
             </el-dropdown-item>

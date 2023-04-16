@@ -290,7 +290,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="id" label="编号" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
           <!-- <el-table-column prop="img" label="商品图片" align="center" />-->
-          <el-table-column prop="" label="头像图片">
+          <el-table-column prop="" label="商品图片">
             <!-- 通过 Scoped slot 可以获取到 row, column, $index 和 store（table 内部的状态管理）的数据，用法参考 demo。 -->
             <!-- slot插槽可以传递任何属性或html元素，但是在调用组件的页面中我们可以使用 template slot-scope="props"来获取插槽上的属性值，获取到的值是一个对象。 -->
             <template v-slot="scope">

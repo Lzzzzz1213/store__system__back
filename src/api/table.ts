@@ -3,6 +3,10 @@ import { request } from "@/utils/service"
 interface ICreateTableDataApi {
   username: string
   password: string
+  email: string
+  head_portrait_url: string
+  id_card: string
+  phone: string
 }
 
 interface IUpdateTableDataApi {

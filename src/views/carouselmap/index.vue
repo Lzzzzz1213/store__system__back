@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { getDepartmentListApi } from "@/api/department"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { getCategoryListApi, addCategoryApi, updataCategoryApi, deleteCategoryApi } from "@/api/category"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -18,29 +17,29 @@ const formData = reactive({
 const formRules: FormRules = reactive({
   name: [{ required: true, trigger: "blur", message: "请输入种类名" }]
 })
-// const handleCreate = () => {
-//   formRef.value?.validate((valid: boolean) => {
-//     if (valid) {
-//       if (currentUpdateId.value === undefined) {
-//         addCategoryApi({
-//           name: formData.name
-//         }).then(() => {
-//           ElMessage.success("添加成功")
-//           dialogVisible.value = false
-//           getTableData()
-//         })
-//       } else {
-//         updataCategoryApi(currentUpdateId.value as number, { name: formData.name }).then(() => {
-//           ElMessage.success("修改成功")
-//           dialogVisible.value = false
-//           getTableData()
-//         })
-//       }
-//     } else {
-//       return false
-//     }
-//   })
-// }
+const handleCreate = () => {
+  formRef.value?.validate((valid: boolean) => {
+    if (valid) {
+      if (currentUpdateId.value === undefined) {
+        addCategoryApi({
+          name: formData.name
+        }).then(() => {
+          ElMessage.success("添加成功")
+          dialogVisible.value = false
+          getTableData()
+        })
+      } else {
+        updataCategoryApi(currentUpdateId.value as number, { name: formData.name }).then(() => {
+          ElMessage.success("修改成功")
+          dialogVisible.value = false
+          getTableData()
+        })
+      }
+    } else {
+      return false
+    }
+  })
+}
 const resetForm = () => {
   currentUpdateId.value = undefined
   formData.name = ""
@@ -48,18 +47,18 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-// const handleDelete = (row: any) => {
-//   ElMessageBox.confirm(`正在删除种类：${row.name}，确认删除？`, "提示", {
-//     confirmButtonText: "确定",
-//     cancelButtonText: "取消",
-//     type: "warning"
-//   }).then(() => {
-//     deleteCategoryApi(row.id).then(() => {
-//       ElMessage.success("删除成功")
-//       getTableData()
-//     })
-//   })
-// }
+const handleDelete = (row: any) => {
+  ElMessageBox.confirm(`正在删除种类：${row.name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteCategoryApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      getTableData()
+    })
+  })
+}
 //#endregion
 
 //#region 改
@@ -79,13 +78,12 @@ const searchData = reactive({
 })
 const getTableData = () => {
   loading.value = true
-  getDepartmentListApi({
+  getCategoryListApi({
     currentPage: paginationData.currentPage,
-    size: paginationData.pageSize
-    // name: searchData.name || undefined
+    size: paginationData.pageSize,
+    name: searchData.name || undefined
   })
     .then((res: any) => {
-      console.log(res)
       paginationData.total = res.total
       tableData.value = res.data
     })
@@ -149,16 +147,15 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
-          {{ tableData }}
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="编号" align="center" />
-          <el-table-column prop="departname" label="部门名称" align="center" />
-          <el-table-column prop="departnumber" label="部门编号" align="center" />
-          <!--          <el-table-column prop="updated_time" label="修改时间" align="center" />-->
+          <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="created_time" label="添加时间" align="center" />
+          <el-table-column prop="updated_time" label="修改时间" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <!--              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>-->
+              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
