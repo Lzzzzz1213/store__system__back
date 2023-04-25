@@ -10,6 +10,7 @@ import UnoCSS from "unocss/vite"
 export default (configEnv: ConfigEnv): UserConfigExport => {
   const viteEnv = loadEnv(configEnv.mode, process.cwd()) as ImportMetaEnv
   const { VITE_PUBLIC_PATH } = viteEnv
+  const server = viteEnv.VITE_APP_SERVER_IP
   return {
     /** 打包时根据实际情况修改 base */
     base: VITE_PUBLIC_PATH,
@@ -35,7 +36,7 @@ export default (configEnv: ConfigEnv): UserConfigExport => {
       /** 接口代理 */
       proxy: {
         "/demo/api": {
-          target: "http://127.0.0.1:9000/demo/api",
+          target: `http://${server}/demo/api`,
           ws: true,
           /** 是否允许跨域 */
           changeOrigin: true,
