@@ -8,3 +8,12 @@ export function uploadImg(data: any) {
     headers: { "Content-Type": "multipart/form-data" }
   })
 }
+
+export function upload(data: any) {
+  return request({
+    url: "/img/imgUpload/",
+    method: "post",
+    data: data,
+    headers: { "Content-Type": "multipart/form-data" }
+  })
+}
