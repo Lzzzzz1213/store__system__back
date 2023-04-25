@@ -89,7 +89,7 @@ export default {
     const isTure = ref("")
     const login_user = ref({
       username: "root",
-      password: "UWv8GKUFDXagab2VOKzG5NyAV7M87QwS",
+      password: "YGP4gKxo8n88QvyEkTb8AcWlGn6U7loW",
       type: "user"
     })
     const reset_user = ref({
