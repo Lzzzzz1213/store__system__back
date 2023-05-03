@@ -14,7 +14,7 @@ const router = useRouter()
 const appStore = useAppStore()
 const settingsStore = useSettingsStore()
 const userStore = useUserStore()
-
+const server = import.meta.env.VITE_APP_SERVER_IP
 const sidebar = computed(() => {
   return appStore.sidebar
 })
@@ -47,7 +47,7 @@ const logout = () => {
       <Notify v-if="showNotify" class="right-menu-item" />
       <el-dropdown class="right-menu-item">
         <div class="right-menu-avatar">
-          <el-avatar :src="userStore.headurl" :size="30" />
+          <el-avatar :src="`http://${server}/demo/api/img/media/${userStore.img}`" :size="30" />
           <span>{{ userStore.username }}</span>
         </div>
         <template #dropdown>

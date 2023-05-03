@@ -6,6 +6,8 @@ import { getToken, removeToken, setToken } from "@/utils/cache/cookies"
 import router, { resetRouter } from "@/router"
 import { type ILoginData, loginApi, getUserInfoApi, getUserListApi } from "@/api/login"
 import { type RouteRecordRaw } from "vue-router"
+import { UserLoginOut } from "@/api/user"
+import { ElMessage } from "element-plus"
 
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>(getToken() || "")
@@ -14,6 +16,7 @@ export const useUserStore = defineStore("user", () => {
   const id = ref(sessionStorage.getItem("id") || "")
   const mail = ref<string>(sessionStorage.getItem("mail") || "")
   const headurl = ref<string>(sessionStorage.getItem("headurl") || "")
+  const img = ref<string>(sessionStorage.getItem("img_path") || "")
   /** 设置角色数组 */
   const setRoles = (value: string[]) => {
     roles.value = value
@@ -34,11 +37,13 @@ export const useUserStore = defineStore("user", () => {
           username.value = res.data.username
           headurl.value = res.data.headurl
           token.value = res.data.token
+          img.value = res.data.img.img__path
           sessionStorage.setItem("token", token.value)
           sessionStorage.setItem("id", id.value.toString())
           sessionStorage.setItem("username", username.value)
           sessionStorage.setItem("mail", mail.value)
           sessionStorage.setItem("headurl", headurl.value)
+          sessionStorage.setItem("img_path", img.value)
           resolve(true)
         })
         .catch((error) => {
@@ -88,10 +93,19 @@ export const useUserStore = defineStore("user", () => {
   }
 
   /** 登出 */
-  const logout = () => {
+  const logout = async () => {
+    if (getToken()) {
+      try {
+        await UserLoginOut(<string>getToken())
+      } catch (error) {
+        ElMessage.error(`退出登录失败${error}`)
+      }
+    }
     removeToken()
     token.value = ""
     roles.value = []
+    sessionStorage.clear()
+    await router.push("/login")
     resetRouter()
   }
   /** 重置 Token */
@@ -105,6 +119,7 @@ export const useUserStore = defineStore("user", () => {
     token,
     roles,
     username,
+    img,
     id,
     mail,
     headurl,

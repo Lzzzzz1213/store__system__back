@@ -34,3 +34,18 @@ export function getUserDataApi(params: IGetUserDataApi) {
     params
   })
 }
+
+export function UserDisableOrEnable(id: any) {
+  return request({
+    url: `/user/status/${id}/`,
+    method: "put"
+  })
+}
+
+export function UserLoginOut(token: string) {
+  return request({
+    url: "/user/logout/",
+    method: "post",
+    params: { token }
+  })
+}
