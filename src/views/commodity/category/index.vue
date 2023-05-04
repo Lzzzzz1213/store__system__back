@@ -4,6 +4,7 @@ import { getCategoryListApi, addCategoryApi, updataCategoryApi, deleteCategoryAp
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+import moment from "moment"
 
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -145,13 +146,20 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         </div>
       </div>
       <div class="table-wrapper">
-        <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="编号" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="created_time" label="添加时间" align="center" />
-          <el-table-column prop="updated_time" label="修改时间" align="center" />
+          <el-table-column label="添加时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.created_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.updated_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>

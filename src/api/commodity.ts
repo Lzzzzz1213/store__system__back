@@ -19,7 +19,7 @@ interface AddCommodityDataApi {
 
 export function getCommodityListApi(params: GetCommodityListDataApi) {
   return request({
-    url: "/commodity/list/",
+    url: "/commodity/search/",
     method: "get",
     params
   })
@@ -51,5 +51,12 @@ export function editCommoditDetailApi(id: number) {
   return request({
     url: `/commodity/editdetail/?method=created&id=${id}`,
     method: "get"
+  })
+}
+
+export function CommodityDisableOrEnable(id: any) {
+  return request({
+    url: `/commodity/status/${id}/`,
+    method: "put"
   })
 }

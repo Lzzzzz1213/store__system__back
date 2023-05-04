@@ -12,6 +12,9 @@ export interface IEmplData {
 interface IGetCustomerListDataApi {
   currentPage: number
   size: number
+  email?: string
+  phone?: string
+  username?: string
 }
 export function getCustomerListApi(params: IGetCustomerListDataApi) {
   return request({

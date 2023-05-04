@@ -290,15 +290,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         </div>
       </div>
       <div class="table-wrapper">
-        <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="username" label="用户名" align="center" />
           <el-table-column prop="head_portrait_url" label="头像" align="center">
             <template #default="scope">
-              <!--              <el-tag v-if="scope.row.roles === 'admin'" effect="plain">admin</el-tag>-->
-              <!--              <el-tag v-else type="warning" effect="plain">{{ scope.row.roles }}</el-tag>-->
-              <!--              <el-avatar :src="scope.row.head_portrait_url" :size="50" />-->
               <el-avatar :src="`http://${server}/demo/api/img/media/${scope.row.img_path}`" :size="50" />
             </template>
           </el-table-column>

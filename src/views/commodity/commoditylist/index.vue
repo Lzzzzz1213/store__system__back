@@ -5,13 +5,17 @@ import {
   addCommodityApi,
   updataCommodityApi,
   deleteCommodityApi,
-  editCommoditDetailApi
+  editCommoditDetailApi,
+  CommodityDisableOrEnable
 } from "@/api/commodity"
 import { getCategoryListApi } from "@/api/category"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight, UploadFilled } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { uploadCommodityImgApi } from "@/api/commodity_imgupload"
+import moment from "moment/moment"
+
+const server = import.meta.env.VITE_APP_SERVER_IP
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -244,6 +248,16 @@ const handleRefresh = () => {
   getTableData()
 }
 //#endregion
+function commodityDisableOrEnable(commodity_id: any) {
+  CommodityDisableOrEnable(commodity_id)
+    .then(() => {
+      ElMessage.success("修改状态成功")
+      getTableData()
+    })
+    .catch((error) => {
+      ElMessage.error(`修改状态失败,${error.msg}`)
+    })
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, { immediate: true })
@@ -254,13 +268,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
         <el-form-item prop="name" label="商品名称">
-          <el-input v-model="searchData.name" placeholder="请输入" />
+          <el-input v-model="searchData.name" placeholder="请输入商品名称" />
         </el-form-item>
-        <el-form-item prop="name" label="种类名称">
-          <el-input v-model="searchData.category" placeholder="请输入" />
+        <el-form-item prop="category" label="种类名称">
+          <el-input v-model="searchData.category" placeholder="请输入种类名称" />
         </el-form-item>
-        <el-form-item prop="name" label="商品编号">
-          <el-input v-model="searchData.item_no" placeholder="请输入" />
+        <el-form-item prop="item_no" label="商品编号">
+          <el-input v-model="searchData.item_no" placeholder="请输入商品编号" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -287,17 +301,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="编号" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <!-- <el-table-column prop="img" label="商品图片" align="center" />-->
+          <el-table-column prop="id" label="商品编号" align="center" />
+          <el-table-column prop="name" label="商品名称" align="center" />
           <el-table-column prop="" label="商品图片">
-            <!-- 通过 Scoped slot 可以获取到 row, column, $index 和 store（table 内部的状态管理）的数据，用法参考 demo。 -->
-            <!-- slot插槽可以传递任何属性或html元素，但是在调用组件的页面中我们可以使用 template slot-scope="props"来获取插槽上的属性值，获取到的值是一个对象。 -->
             <template v-slot="scope">
-              <!-- scope.row获取当前行所有数据 作用域插槽获取当前行的数据（可以是图片连接如下：:src="scope.row.iconImgLarge"） -->
               <el-image
-                style="width: 50px; height: 50px"
-                :src="`http://127.0.0.1:9000/demo/api/img/media/${scope.row.img_path}`"
+                style="width: 100px; height: 100px"
+                :src="`http://${server}/demo/api/img/media/${scope.row.img_path}`"
                 fit=""
               />
             </template>
@@ -306,8 +316,30 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="item_no" label="商品编号" align="center" />
           <el-table-column prop="price" label="商品价格" align="center" />
           <el-table-column prop="introduction" label="商品描述" align="center" />
-          <el-table-column prop="created_time" label="添加时间" align="center" />
-          <el-table-column prop="updated_time" label="修改时间" align="center" />
+          <el-table-column label="添加时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.created_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.updated_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="商品状态" align="center">
+            <template #default="scope">
+              <el-tag
+                v-if="scope.row.state"
+                type="success"
+                effect="plain"
+                @click="commodityDisableOrEnable(scope.row.id)"
+                >上架中</el-tag
+              >
+              <el-tag v-else type="danger" effect="plain" @click="commodityDisableOrEnable(scope.row.id)"
+                >下架中</el-tag
+              >
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改商品</el-button>
@@ -439,5 +471,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.el-tag:hover {
+  cursor: pointer;
 }
 </style>
