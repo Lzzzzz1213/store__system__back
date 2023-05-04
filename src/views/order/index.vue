@@ -1,67 +1,42 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { getOrderListApi } from "@/api/order"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { getOrderListApi, orderDetail } from "@/api/order"
+import { userShoppingAddressDetail } from "@/api/address"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox, ElScrollbar } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { status } from "nprogress"
+import moment from "moment/moment"
 
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-
+const server = import.meta.env.VITE_APP_SERVER_IP
 //#region 增
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = reactive({
-  status: ""
+  orderNumber: "",
+  status: "",
+  receiverName: "",
+  phoneNumber: "",
+  address: "",
+  goodsList: [],
+  totalAmount: undefined,
+  orderTime: ""
 })
+const activeNames = ref(["detail"])
 const formRules: FormRules = reactive({
   name: [{ required: true, trigger: "blur", message: "请输入订单编号" }]
 })
-// const handleCreate = () => {
-//   formRef.value?.validate((valid: boolean) => {
-//     if (valid) {
-//       if (currentUpdateId.value === undefined) {
-//         addCategoryApi({
-//           name: formData.name
-//         }).then(() => {
-//           ElMessage.success("添加成功")
-//           dialogVisible.value = false
-//           getTableData()
-//         })
-//       } else {
-//         updataCategoryApi(currentUpdateId.value as number, { name: formData.name }).then(() => {
-//           ElMessage.success("修改成功")
-//           dialogVisible.value = false
-//           getTableData()
-//         })
-//       }
-//     } else {
-//       return false
-//     }
-//   })
-// }
 const resetForm = () => {
-  currentUpdateId.value = undefined
+  formData.orderNumber = ""
   formData.status = ""
+  formData.receiverName = ""
+  formData.phoneNumber = ""
+  formData.address = ""
+  formData.goodsList = []
+  formData.totalAmount = undefined
+  formData.orderTime = ""
 }
-//#endregion
-
-//#region 删
-// const handleDelete = (row: any) => {
-//   ElMessageBox.confirm(`正在删除种类：${row.name}，确认删除？`, "提示", {
-//     confirmButtonText: "确定",
-//     cancelButtonText: "取消",
-//     type: "warning"
-//   }).then(() => {
-//     deleteCategoryApi(row.id).then(() => {
-//       ElMessage.success("删除成功")
-//       getTableData()
-//     })
-//   })
-// }
 //#endregion
 
 //#region 改
@@ -84,7 +59,7 @@ const getTableData = () => {
   getOrderListApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    order_no: searchData.order_no
+    order_no: searchData.order_no || undefined
   })
     .then((res: any) => {
       paginationData.total = res.total
@@ -114,6 +89,21 @@ const handleRefresh = () => {
   getTableData()
 }
 //#endregion
+function orderDetailHandler(id: any) {
+  dialogVisible.value = true
+  orderDetail(id).then((res) => {
+    formData.orderNumber = res.data.order_no
+    formData.status = res.data.status
+    formData.goodsList = JSON.parse(res.data.details)
+    formData.totalAmount = res.data.order_amount
+    formData.orderTime = res.data.created_time
+    userShoppingAddressDetail(res.data.shipping_address).then((res) => {
+      formData.receiverName = res.data.linkMan
+      formData.phoneNumber = res.data.mobile
+      formData.address = res.data.provinceStr + res.data.cityStr + res.data.areaStr + res.data.address
+    })
+  })
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, { immediate: true })
@@ -123,8 +113,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="name" label="订单编号">
-          <el-input v-model="searchData.name" placeholder="请输入" />
+        <el-form-item prop="order_no" label="订单编号">
+          <el-input v-model="searchData.order_no" placeholder="请输入订单编号" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -135,8 +125,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <!--          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增种类</el-button>-->
-          <el-button type="danger" :icon="Delete">批量删除</el-button>
+          <el-button type="danger" :icon="Delete" disabled>批量删除</el-button>
         </div>
         <div>
           <el-tooltip content="下载">
@@ -148,30 +137,47 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         </div>
       </div>
       <div class="table-wrapper">
-        <!--        <el-table >:data="userlist"-->
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="编号" align="center" />
           <el-table-column prop="order_no" label="订单编号" align="center" />
           <el-table-column prop="order_amount" label="订单金额" align="center" />
           <el-table-column prop="payment_amount" label="实付金额" align="center" />
-          <el-table-column prop="status" label="订单状态" align="center" />
+          <el-table-column prop="status" label="订单状态" align="center">
+            <template #default="scope">
+              <span v-if="scope.row.status === '2'">已发货，等待客户签收</span>
+              <span v-else-if="scope.row.status === '1'">客户已支付，等待发货</span>
+              <span v-else-if="scope.row.status === '3'">客户已签收，订单结束</span>
+              <span v-else-if="scope.row.status === '0'">等待客户支付订单</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="customer" label="客户id" align="center" />
           <el-table-column prop="remark" label="备注" align="center" />
-          <el-table-column prop="created_time" label="添加时间" align="center" />
-          <el-table-column prop="updated_time" label="修改时间" align="center" />
+          <el-table-column label="添加时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.created_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" align="center">
+            <template #default="scope">
+              {{ moment(scope.row.updated_time).format("YYYY-MM-DD HH:mm:ss") }}
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button
                 type="primary"
                 v-if="scope.row.status === '1'"
                 text
+                round
                 bg
                 size="small"
                 @click="handleUpdate(scope.row)"
                 >发货
               </el-button>
-              <!--              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>-->
+              <el-button type="primary" text round bg size="small" @click="orderDetailHandler(scope.row.id)"
+                >详情
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -190,21 +196,52 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       </div>
     </el-card>
     <!-- 新增/修改 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="currentUpdateId === undefined ? '新增种类' : '修改种类'"
-      @close="resetForm"
-      width="30%"
-    >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="name" label="物流编号">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary">确认</el-button>
-      </template>
+    <el-dialog v-model="dialogVisible" title="订单详情" @close="resetForm" width="40%">
+      <el-scrollbar class="scrollbar-container">
+        <el-form ref="form" :model="formData" label-width="120px" class="form-container">
+          <el-form-item label="订单编号">
+            <span>{{ formData.orderNumber }}</span>
+          </el-form-item>
+          <el-form-item label="收货人">
+            <span>{{ formData.receiverName }}</span>
+          </el-form-item>
+          <el-form-item label="联系电话">
+            <span>{{ formData.phoneNumber }}</span>
+          </el-form-item>
+          <el-form-item label="收货地址">
+            <span>{{ formData.address }}</span>
+          </el-form-item>
+          <el-form-item label="订单金额">
+            <span>{{ formData.totalAmount }}</span>
+          </el-form-item>
+          <el-form-item label="下单时间">
+            <span>{{ moment(formData.orderTime).format("YYYY-MM-DD HH:mm:ss") }}</span>
+          </el-form-item>
+          <el-collapse v-model="activeNames" class="collapse-container">
+            <el-collapse-item title="商品列表" name="goods">
+              <div class="list">
+                <div v-for="(item, index) in formData.goodsList" :key="index" class="list-item">
+                  <el-image
+                    fit="contain"
+                    class="list-item-pic"
+                    :src="`http://${server}/demo/api/img/media/${item.commodity_path}`"
+                  />
+                  <div class="list-item-content">
+                    <div class="list-item-title">{{ item.commodity_name }}</div>
+                    <div class="list-item-bottom">
+                      <div class="list-item-price text-brand-color">
+                        <span class="list-item-price-symbol">¥</span>
+                        <span class="list-item-price-integer">{{ item.price }}</span>
+                      </div>
+                      <div class="list-item-number">x{{ item.number }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </el-form>
+      </el-scrollbar>
     </el-dialog>
   </div>
 </template>
@@ -230,5 +267,119 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.el-scrollbar__wrap {
+  padding: 10px;
+  display: block;
+}
+
+.form-container {
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+.el-form-item__label {
+  color: #606266;
+  font-weight: bold;
+}
+
+.el-form-item__content {
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.el-collapse-item__header {
+  font-size: 16px;
+  color: #409eff;
+  border: none;
+  padding: 0;
+}
+
+.el-collapse-item__content {
+  padding: 0;
+}
+
+.goods-table {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.submit-btn {
+  margin-top: 20px;
+}
+
+.list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color: #fff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.list-item:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.list-item-pic {
+  width: 80px;
+  height: 80px;
+  margin-right: 20px;
+  border-radius: 5px;
+}
+
+.list-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.list-item-title {
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+.list-item-prop {
+  font-size: 14px;
+  color: #666;
+}
+
+.list-item-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.list-item-price {
+  font-size: 16px;
+  color: #f00;
+}
+
+.list-item-price-symbol {
+  font-size: 14px;
+}
+
+.list-item-price-integer {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.list-item-number {
+  font-size: 14px;
+  color: #666;
 }
 </style>

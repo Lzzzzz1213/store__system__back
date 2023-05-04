@@ -28,7 +28,7 @@ interface GetOrderListDataApi {
   /** 查询条数 */
   size: number
 
-  order_no: string
+  order_no?: string
 }
 
 export function getOrderListApi(params?: GetOrderListDataApi) {
@@ -36,5 +36,12 @@ export function getOrderListApi(params?: GetOrderListDataApi) {
     url: "/order/list/",
     method: "get",
     params
+  })
+}
+
+export function orderDetail(id: any) {
+  return request({
+    url: `/order/detail/${id}`,
+    method: "get"
   })
 }
