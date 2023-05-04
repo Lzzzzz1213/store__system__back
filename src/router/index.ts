@@ -89,7 +89,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         // component: () => import("@/views/user/resetpwd/index.vue"),
         name: "userlists",
         meta: {
-          title: "帐号列表",
+          title: "后台账号列表",
           elIcon: "Memo"
         }
       }
@@ -133,13 +133,26 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: "/order",
     component: Layout,
     redirect: "/order/orderlist",
+    meta: {
+      title: "订单管理",
+      svgIcon: "commodity"
+    },
     children: [
       {
         path: "orderlist",
         component: () => import("@/views/order/index.vue"),
         name: "order",
         meta: {
-          title: "订单管理",
+          title: "订单列表",
+          svgIcon: "order"
+        }
+      },
+      {
+        path: "evaluatelist",
+        component: () => import("@/views/evaluate/index.vue"),
+        name: "evaluate",
+        meta: {
+          title: "评价列表",
           svgIcon: "order"
         }
       }
@@ -193,15 +206,6 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "customerlist"
         }
       }
-      // {
-      //   path: "customermessage",
-      //   component: () => import("@/views/demo/index.vue"),
-      //   name: "customermessage",
-      //   meta: {
-      //     title: "客户消息",
-      //     svgIcon: "customermessage"
-      //   }
-      // }
     ]
   },
   // {
