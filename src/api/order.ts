@@ -29,6 +29,8 @@ interface GetOrderListDataApi {
   size: number
 
   order_no?: string
+
+  status?: string
 }
 
 export function getOrderListApi(params?: GetOrderListDataApi) {

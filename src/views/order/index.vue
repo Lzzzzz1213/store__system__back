@@ -2,12 +2,16 @@
 import { reactive, ref, watch } from "vue"
 import { getOrderListApi, orderDetail } from "@/api/order"
 import { userShoppingAddressDetail } from "@/api/address"
+import { addLogistics, getLogistics, editLogistics } from "@/api/logistics"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox, ElScrollbar } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import moment from "moment/moment"
 
 const loading = ref<boolean>(false)
+const visible = ref<boolean>(false)
+const logistics_no = ref<string>("没有物流信息")
+const order = ref<number>(0)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const server = import.meta.env.VITE_APP_SERVER_IP
 //#region 增
@@ -36,15 +40,16 @@ const resetForm = () => {
   formData.goodsList = []
   formData.totalAmount = undefined
   formData.orderTime = ""
+  logistics_no.value = "没有物流信息"
+  order.value = -1
 }
 //#endregion
 
 //#region 改
 const currentUpdateId = ref<undefined | number>(undefined)
 const handleUpdate = (row: any) => {
-  currentUpdateId.value = row.id
-  formData.status = row.status
-  dialogVisible.value = true
+  visible.value = true
+  order.value = row.id
 }
 //#endregion
 
@@ -52,14 +57,16 @@ const handleUpdate = (row: any) => {
 const tableData = ref<any[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
-  order_no: ""
+  order_no: "",
+  status: ""
 })
 const getTableData = () => {
   loading.value = true
   getOrderListApi({
     currentPage: paginationData.currentPage,
     size: paginationData.pageSize,
-    order_no: searchData.order_no || undefined
+    order_no: searchData.order_no || undefined,
+    status: searchData.status || undefined
   })
     .then((res: any) => {
       paginationData.total = res.total
@@ -91,18 +98,60 @@ const handleRefresh = () => {
 //#endregion
 function orderDetailHandler(id: any) {
   dialogVisible.value = true
+  order.value = id
   orderDetail(id).then((res) => {
     formData.orderNumber = res.data.order_no
     formData.status = res.data.status
     formData.goodsList = JSON.parse(res.data.details)
     formData.totalAmount = res.data.order_amount
     formData.orderTime = res.data.created_time
+    if (formData.status === "2") {
+      getLogistics(id).then((res) => {
+        if (!res.data.msg) {
+          logistics_no.value = res.data.logistics_no
+        }
+      })
+    }
     userShoppingAddressDetail(res.data.shipping_address).then((res) => {
       formData.receiverName = res.data.linkMan
       formData.phoneNumber = res.data.mobile
       formData.address = res.data.provinceStr + res.data.cityStr + res.data.areaStr + res.data.address
     })
   })
+}
+function AddLogistics() {
+  const params = {
+    logistics_no: logistics_no.value,
+    order: order.value
+  }
+  addLogistics(params)
+    .then(() => {
+      ElMessage.success("添加物流成功！")
+    })
+    .catch((error) => {
+      ElMessage.error(`添加物流失败！${error}`)
+    })
+}
+
+function EditLogistics() {
+  const params = {
+    logistics_no: logistics_no.value,
+    order: order.value
+  }
+  editLogistics(params)
+    .then(() => {
+      ElMessage.success("修改物流成功！")
+    })
+    .catch((error) => {
+      ElMessage.error(`修改物流失败！${error}`)
+    })
+}
+function handleSubmit() {
+  const params = {
+    logistics_no: logistics_no.value,
+    order: order.value
+  }
+  console.log(params)
 }
 
 /** 监听分页参数的变化 */
@@ -115,6 +164,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
         <el-form-item prop="order_no" label="订单编号">
           <el-input v-model="searchData.order_no" placeholder="请输入订单编号" />
+        </el-form-item>
+        <el-form-item prop="status" label="订单状态">
+          <el-select v-model="searchData.status" placeholder="请选择订单状态">
+            <el-option-group label="订单状态">
+              <el-option label="未支付" value="0" />
+              <el-option label="已支付" value="1" />
+              <el-option label="已发货" value="2" />
+              <el-option label="已签收" value="3" />
+            </el-option-group>
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -165,16 +224,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button
-                type="primary"
-                v-if="scope.row.status === '1'"
-                text
-                round
-                bg
-                size="small"
-                @click="handleUpdate(scope.row)"
-                >发货
-              </el-button>
+              <!--              <el-button-->
+              <!--                type="primary"-->
+              <!--                v-if="scope.row.status === '1'"-->
+              <!--                text-->
+              <!--                round-->
+              <!--                bg-->
+              <!--                size="small"-->
+              <!--                @click="handleUpdate(scope.row)"-->
+              <!--                >发货-->
+              <!--              </el-button>-->
               <el-button type="primary" text round bg size="small" @click="orderDetailHandler(scope.row.id)"
                 >详情
               </el-button>
@@ -217,6 +276,21 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-form-item label="下单时间">
             <span>{{ moment(formData.orderTime).format("YYYY-MM-DD HH:mm:ss") }}</span>
           </el-form-item>
+          <el-form-item label="订单状态">
+            <span>
+              {{
+                formData.status === "0"
+                  ? "未支付"
+                  : formData.status === "1"
+                  ? "待发货"
+                  : formData.status === "2"
+                  ? "等待签收"
+                  : formData.status === "3"
+                  ? "已完成"
+                  : ""
+              }}
+            </span>
+          </el-form-item>
           <el-collapse v-model="activeNames" class="collapse-container">
             <el-collapse-item title="商品列表" name="goods">
               <div class="list">
@@ -239,6 +313,17 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
                 </div>
               </div>
             </el-collapse-item>
+            <div class="dialog-footer">
+              <el-form inline>
+                <el-form-item label="物流编号:">
+                  <el-input :disabled="formData.status === '0' || formData.status === '3'" v-model="logistics_no" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="AddLogistics" v-if="formData.status === '1'">发 货</el-button>
+                  <el-button type="primary" @click="EditLogistics" v-if="formData.status === '2'">修改物流</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
           </el-collapse>
         </el-form>
       </el-scrollbar>
@@ -381,5 +466,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 .list-item-number {
   font-size: 14px;
   color: #666;
+}
+
+.dialog-footer {
+  padding: 20px;
+  border-top: 1px solid #ebebeb;
 }
 </style>

@@ -153,7 +153,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "evaluate",
         meta: {
           title: "评价列表",
-          svgIcon: "order"
+          svgIcon: "evaluatelist"
         }
       }
     ]
