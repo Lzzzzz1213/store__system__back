@@ -48,7 +48,7 @@
             </i>
             <input type="password" placeholder="身份证后六位" v-model="reset_user.lastSixdigitsofIDcard" />
           </div>
-          <input type="button" class="btn" value="submit" />
+          <input type="button" class="btn" value="submit" @click="resetUserPwd" />
         </form>
       </div>
     </div>
@@ -74,12 +74,14 @@
 </template>
 
 <script>
-import { getCurrentInstance, ref } from "vue"
+import { getCurrentInstance, reactive, ref } from "vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 // import useMainStore from '../utils/pinia/store'
 import { useRouter } from "vue-router"
 // import router from "../utils/router"
 import { User, Lock, Key, Message, Warning } from "@element-plus/icons-vue"
 import { useUserStore } from "@/store/modules/user"
+import { UserRestPwd } from "@/api/user"
 export default {
   name: "login",
   setup() {
@@ -92,7 +94,7 @@ export default {
       password: "YGP4gKxo8n88QvyEkTb8AcWlGn6U7loW",
       type: "user"
     })
-    const reset_user = ref({
+    const reset_user = reactive({
       username: "",
       email: "",
       lastSixdigitsofIDcard: ""
@@ -126,6 +128,19 @@ export default {
           prox.appContext.config.globalProperties.$message.error("登陆失败")
         })
     }
+    function resetUserPwd() {
+      UserRestPwd({
+        username: reset_user.username,
+        email: reset_user.email,
+        id_card: reset_user.lastSixdigitsofIDcard
+      })
+        .then((res) => {
+          ElMessage.success("重置密码邮件已发送至预留邮箱中，请查收。")
+        })
+        .catch((error) => {
+          ElMessage.error(`用户信息校验失败，请检查邮箱、用户名、身份证后6位${error}`)
+        })
+    }
     // function resetPwdHandler() {
     //   const user = {
     //     username: reset_user.value.username,
@@ -147,6 +162,7 @@ export default {
       login_user,
       reset_user,
       loginHandler,
+      resetUserPwd,
       // resetPwdHandler,
       User,
       Lock,

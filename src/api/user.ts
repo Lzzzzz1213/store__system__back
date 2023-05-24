@@ -18,6 +18,11 @@ interface IGetUserDataApi {
   username?: string
   phone?: string
 }
+interface IRestUserPwdApi {
+  username: string
+  email: string
+  id_card: string
+}
 /** 增 */
 export function createUserDataApi(data: ICreateUserDataApi) {
   return request({
@@ -47,5 +52,13 @@ export function UserLoginOut(token: string) {
     url: "/user/logout/",
     method: "post",
     params: { token }
+  })
+}
+
+export function UserRestPwd(params: IRestUserPwdApi) {
+  return request({
+    url: "/user/register/",
+    method: "put",
+    data: params
   })
 }
